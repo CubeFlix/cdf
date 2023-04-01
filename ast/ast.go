@@ -3,9 +3,11 @@
 
 package ast
 
+import "image/color"
+
 // CDF document.
 type Document struct {
-	// Document metadata.
+	// Document information.
 	Title     string
 	Subtitle  string
 	Date      string
@@ -15,7 +17,18 @@ type Document struct {
 	Footer    string
 }
 
-// Paragraph alignment types.
+// Block for AST.
+type Block interface {
+	// Reserved for future use.
+}
+
+// Base block.
+type BaseBlock struct {
+	Alignment AlignmentType
+	Children  []Block
+}
+
+// Block alignment types.
 type AlignmentType int64
 
 const (
@@ -27,8 +40,9 @@ const (
 
 // Paragraph struct for AST.
 type Paragraph struct {
-	Alignment AlignmentType
-	Content   []InlineBlock
+	BaseBlock
+
+	Content []InlineBlock
 }
 
 // Inline block for AST.
@@ -59,6 +73,8 @@ type HyperlinkBlock struct {
 // Formatting block.
 type FormattingBlock struct {
 	BaseInlineBlock
+
+	Attributes []FormattingBlock
 }
 
 // Inline formatting types.
@@ -70,6 +86,27 @@ const (
 	StrikethroughFormatting
 	UnderlineFormatting
 	TeletypeFormatting
-	ColorFormatting
-	SizeFormatting
+)
+
+// Color block.
+type ColorBlock struct {
+	BaseInlineBlock
+
+	Value color.Color
+}
+
+// Size block.
+type SizeBlock struct {
+	BaseInlineBlock
+
+	Value float32
+	Type  SizeType
+}
+
+// Size value type.
+type SizeType int64
+
+const (
+	PercentageType SizeType = iota
+	PixelType
 )
