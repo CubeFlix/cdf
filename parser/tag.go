@@ -7,10 +7,15 @@ import (
 	"errors"
 	"io"
 	"unicode"
+
+	"github.com/cubeflix/cdf/ast"
 )
 
 // An opening tag item.
 type tagItem struct {
+	// If the tag is a closing tag: [[/]]
+	IsClosing bool
+
 	// The tag type/name.
 	Name string
 
@@ -19,14 +24,14 @@ type tagItem struct {
 }
 
 // Parse an opening tag item.
-func (p *Parser) parseOpeningTag() (tagItem, error) {
+func (p *Parser) parseTag() (tagItem, error) {
 	// Expect the opening '[['.
 	if p.cur+1 >= p.length {
 		return tagItem{}, io.EOF
 	}
 	if p.data[p.cur] != '[' || p.data[p.cur+1] != '[' {
 		// Invalid opening tags.
-		return tagItem{}, errors.New("expected '[[' for opening tag")
+		return tagItem{}, errors.New("expected '[[' for tag")
 	}
 	p.cur += 2
 
@@ -34,6 +39,29 @@ func (p *Parser) parseOpeningTag() (tagItem, error) {
 	err := p.skipWhitespace()
 	if err != nil {
 		return tagItem{}, err
+	}
+
+	// Check for a closing tag.
+	if p.cur >= p.length {
+		return tagItem{}, io.EOF
+	}
+	if p.data[p.cur] == '/' {
+		// Closing tag.
+		p.cur++
+		err = p.skipWhitespace()
+		if err != nil {
+			return tagItem{}, err
+		}
+		if p.cur+1 >= p.length {
+			return tagItem{}, io.EOF
+		}
+		if p.data[p.cur] != ']' || p.data[p.cur+1] != ']' {
+			return tagItem{}, errors.New("expected ']]' for closing tag")
+		}
+		p.cur += 2
+		return tagItem{
+			IsClosing: true,
+		}, nil
 	}
 
 	// Parse the tag name.
@@ -139,7 +167,7 @@ func (p *Parser) parseOpeningTagAttribute() (string, string, bool, error) {
 	// Parse the attribute value.
 	var valueLen int
 	for {
-		if p.cur+valueLen >= p.length {
+		if p.cur+valueLen+1 >= p.length {
 			return "", "", false, io.EOF
 		}
 
@@ -150,12 +178,7 @@ func (p *Parser) parseOpeningTagAttribute() (string, string, bool, error) {
 			continue
 		}
 
-		// TODO: NEED TO CLEAN/ESCAPE THE FINAL VALUE
-
 		// Check for a ']]'.
-		if p.cur+valueLen+1 >= p.length {
-			return "", "", false, io.EOF
-		}
 		if p.data[p.cur+valueLen] == ']' && p.data[p.cur+valueLen+1] == ']' {
 			// End the value.
 			value := p.data[p.cur : p.cur+valueLen]
@@ -175,4 +198,23 @@ func (p *Parser) parseOpeningTagAttribute() (string, string, bool, error) {
 
 		valueLen++
 	}
+}
+
+// Check the tag for alignment information.
+func (p *Parser) tagGetAlignment(t tagItem) (ast.AlignmentType, error) {
+	if val, ok := t.Attributes["align"]; ok {
+		switch val {
+		case "none":
+			return ast.NoAlign, nil
+		case "left":
+			return ast.LeftAlign, nil
+		case "right":
+			return ast.RightAlign, nil
+		case "center":
+			return ast.CenterAlign, nil
+		default:
+			return 0, errors.New("invalid alignment type")
+		}
+	}
+	return ast.NoAlign, nil
 }

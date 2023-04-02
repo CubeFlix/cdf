@@ -15,24 +15,33 @@ type Document struct {
 	Copyright string
 	Header    string
 	Footer    string
+
+	// The blocks in the document.
+	Content []Block
 }
 
 // Block for AST.
 type Block interface {
-	// Reserved for future use.
+	Parent() Block
 }
 
 // Base block.
 type BaseBlock struct {
 	Alignment AlignmentType
-	Children  []Block
+
+	BlockParent Block
+}
+
+// Return the parent block.
+func (b *BaseBlock) Parent() Block {
+	return b.BlockParent
 }
 
 // Block alignment types.
 type AlignmentType int64
 
 const (
-	FullAlign AlignmentType = iota
+	NoAlign AlignmentType = iota
 	LeftAlign
 	RightAlign
 	CenterAlign
@@ -45,36 +54,27 @@ type Paragraph struct {
 	Content []InlineBlock
 }
 
-// Inline block for AST.
-type InlineBlock interface {
-	// Reserved for future use.
-}
+// Inline block for AST. An inline block may be a base inline block or string.
+type InlineBlock interface{}
 
 // Base inline block.
 type BaseInlineBlock struct {
-	Children []InlineBlock
-}
-
-// Content block.
-type ContentBlock struct {
-	BaseInlineBlock
-
-	Content []byte
+	// The block's content. A slice of more inline blocks.
+	Content []InlineBlock
 }
 
 // Hyperlink block.
 type HyperlinkBlock struct {
 	BaseInlineBlock
 
-	Content     []byte
-	Destination []byte
+	Destination string
 }
 
 // Formatting block.
 type FormattingBlock struct {
 	BaseInlineBlock
 
-	Attributes []FormattingBlock
+	Attribute FormattingType
 }
 
 // Inline formatting types.

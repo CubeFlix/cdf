@@ -3,13 +3,16 @@
 
 package main
 
-import "github.com/cubeflix/cdf/parser"
+import (
+	"fmt"
+
+	"github.com/cubeflix/cdf/parser"
+)
 
 var code string = `
-[[hello tag=12|a=1357 gnio afpi\|gr\]] ]]
-hi
-fsnpi
-gebipa [[b]]35!! bno[[/]]
+[[cdf]]
+[[p align=left]]ageni:
+[[link dest=https://google.com]]hello paragraph[[/]] gensp gn[[/]]
 [[/]]
 `
 
@@ -19,4 +22,5 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println(p.Tree.Content[0])
 }

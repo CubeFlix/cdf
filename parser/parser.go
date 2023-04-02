@@ -7,7 +7,7 @@ package parser
 import (
 	"bufio"
 	"bytes"
-	"fmt"
+	"errors"
 	"io"
 	"strings"
 
@@ -46,27 +46,27 @@ func (p *Parser) Parse() error {
 		return err
 	}
 
-	// Read the file's header.
-	// err = p.parseHeader()
-	// if err != nil {
-	// 	return err
-	// }
-
-	// Read the first tag.
-	ot, err := p.parseOpeningTag()
+	// Read the opening tag.
+	openingTag, err := p.parseTag()
 	if err != nil {
 		return err
 	}
-	fmt.Println(ot)
-	return nil
+	if openingTag.IsClosing {
+		return errors.New("expected an opening tag")
+	}
+	if openingTag.Name != "cdf" {
+		return errors.New("expected a 'cdf' tag")
+	}
 
-	// for {
-	// 	// Read each block.
-	// 	err = p.parseBlock()
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
+	// Read the block's contents.
+	content, err := p.parseBlockContent()
+	if err != nil {
+		return err
+	}
+
+	p.Tree.Content = content
+
+	return nil
 }
 
 // Skip whitespace.
@@ -103,10 +103,3 @@ func escapeText(data []byte) string {
 		out.WriteByte(b)
 	}
 }
-
-// Parse the header.
-// func (p *Parser) parseHeader() error {
-// 	if data[0] == '[' {
-//
-// 	}
-// }
