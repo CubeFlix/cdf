@@ -5,8 +5,11 @@
 package parser
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/cubeflix/cdf/ast"
 )
@@ -79,6 +82,25 @@ func (p *Parser) skipWhitespace() error {
 			return nil
 		}
 		p.cur++
+	}
+}
+
+// Clean/escape a block of text.
+func escapeText(data []byte) string {
+	r := bufio.NewReader(bytes.NewReader(data))
+	out := strings.Builder{}
+	for {
+		chunk, err := r.ReadString('\\')
+		if err != nil {
+			out.WriteString(chunk)
+			return out.String()
+		}
+		out.WriteString(chunk[:len(chunk)-1])
+		b, err := r.ReadByte()
+		if err != nil {
+			return out.String()
+		}
+		out.WriteByte(b)
 	}
 }
 

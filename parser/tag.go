@@ -5,7 +5,6 @@ package parser
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"unicode"
 )
@@ -78,7 +77,6 @@ func (p *Parser) parseOpeningTag() (tagItem, error) {
 		if err != nil {
 			return tagItem{}, err
 		}
-		fmt.Println(attrName, attrValue, expectMore)
 		attributes[attrName] = attrValue
 
 		if !expectMore {
@@ -163,7 +161,7 @@ func (p *Parser) parseOpeningTagAttribute() (string, string, bool, error) {
 			value := p.data[p.cur : p.cur+valueLen]
 			p.cur += valueLen + 2
 
-			return string(name), string(value), false, nil
+			return string(name), escapeText(value), false, nil
 		}
 
 		// Check for a '|'.
@@ -172,12 +170,7 @@ func (p *Parser) parseOpeningTagAttribute() (string, string, bool, error) {
 			value := p.data[p.cur : p.cur+valueLen]
 			p.cur += valueLen + 1
 
-			return string(name), string(value), true, nil
-		}
-
-		// Make sure the value is printable.
-		if !unicode.IsPrint(rune(p.data[p.cur+valueLen])) {
-			return "", "", false, errors.New("non-printable character")
+			return string(name), escapeText(value), true, nil
 		}
 
 		valueLen++
