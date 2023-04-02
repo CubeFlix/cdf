@@ -5,6 +5,7 @@
 package parser
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/cubeflix/cdf/ast"
@@ -14,66 +15,76 @@ import (
 type Parser struct {
 	settings Settings
 
+	// The input data.
+	data   []byte
+	length int
+
+	// The current position of the cursor.
+	cur int
+
 	// The output document AST.
 	Tree ast.Document
 }
 
 // Create a new parser.
-func NewParser() *Parser {
+func NewParser(data []byte) *Parser {
 	return &Parser{
-		Tree: ast.Document{},
+		data:   data,
+		length: len(data),
+		Tree:   ast.Document{},
 	}
 }
 
-// Parse the document. Takes the document as data, and returns the index of the
-// end of the document.
-func (p *Parser) Parse(data []byte) (int, error) {
-	var temp, i int
-
+// Parse the document.
+func (p *Parser) Parse() error {
 	// Skip whitespace.
-	i, err := p.skipWhitespace(data)
+	err := p.skipWhitespace()
 	if err != nil {
-		return i, err
+		return err
 	}
 
-	// Read the file's metadata header.
-	temp, err = p.parseHeader(data[i:])
-	if err != nil {
-		return i, err
-	}
-	i += temp
+	// Read the file's header.
+	// err = p.parseHeader()
+	// if err != nil {
+	// 	return err
+	// }
 
-	for {
-		// Read each block.
-		temp, err = p.parseBlock(data[i:])
-		if err != nil {
-			return i, err
-		}
-		i += temp
+	// Read the first tag.
+	ot, err := p.parseOpeningTag()
+	if err != nil {
+		return err
 	}
+	fmt.Println(ot)
+	return nil
+
+	// for {
+	// 	// Read each block.
+	// 	err = p.parseBlock()
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 }
 
-// Skip whitespace. Returns the length of the whitespace.
-func (p *Parser) skipWhitespace(data []byte) (int, error) {
-	var i int
+// Skip whitespace.
+func (p *Parser) skipWhitespace() error {
+	var b byte
 	for {
-		if i >= len(data) {
+		if p.cur >= p.length {
 			// End of data.
-			return i, io.EOF
+			return io.EOF
 		}
-		b := data[i]
-		if b == ' ' || b == '\t' || b == '\n' || b == '\r' {
-			return i, io.EOF
+		b = p.data[p.cur]
+		if b != ' ' && b != '\t' && b != '\n' && b != '\r' {
+			return nil
 		}
-		i++
-	}
-
-	return i, nil
-}
-
-// Parse the header. Returns the length of the header.
-func (p *Parser) parseHeader(data []byte) (int, error) {
-	if data[0] == '[' {
-
+		p.cur++
 	}
 }
+
+// Parse the header.
+// func (p *Parser) parseHeader() error {
+// 	if data[0] == '[' {
+//
+// 	}
+// }
