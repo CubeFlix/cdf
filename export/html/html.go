@@ -4,7 +4,11 @@
 package html
 
 import (
+	"errors"
+	"html"
 	"io"
+
+	"github.com/cubeflix/cdf/ast"
 )
 
 // HTML exporter.
@@ -19,4 +23,117 @@ func NewHTMLExporter(stream io.Writer, settings HTMLSettings) *HTMLExporter {
 		stream:   stream,
 		settings: settings,
 	}
+}
+
+// Export the document to HTML.
+func (h *HTMLExporter) Export(d *ast.Document) error {
+	var hasTitle bool
+
+	// Write the title.
+	if !h.settings.OmitTitle && d.Title != "" {
+		h.stream.Write([]byte("<h1>"))
+		h.stream.Write([]byte(html.EscapeString(d.Title)))
+		h.stream.Write([]byte("</h1>\n"))
+		hasTitle = true
+	}
+
+	// Write the subtitle.
+	if !h.settings.OmitSubtitle && d.Subtitle != "" {
+		h.stream.Write([]byte("<h2>"))
+		h.stream.Write([]byte(html.EscapeString(d.Subtitle)))
+		h.stream.Write([]byte("</h2>\n"))
+		hasTitle = true
+	}
+
+	// Write the date.
+	if !h.settings.OmitDate && d.Date != "" {
+		h.stream.Write([]byte("<h3>"))
+		h.stream.Write([]byte(html.EscapeString(d.Date)))
+		h.stream.Write([]byte("</h3>\n"))
+		hasTitle = true
+	}
+
+	// Write the author.
+	if !h.settings.OmitAuthor && d.Author != "" {
+		h.stream.Write([]byte("<h3>"))
+		h.stream.Write([]byte(html.EscapeString(d.Author)))
+		h.stream.Write([]byte("</h3>\n"))
+		hasTitle = true
+	}
+
+	if hasTitle {
+		h.stream.Write([]byte("<hr>\n"))
+	}
+
+	// Write the header.
+	if h.settings.IncludeHeader {
+	}
+
+	// Write the content.
+	for i := range d.Content {
+		err := h.exportBlock(d.Content[i])
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Export a block to HTML.
+func (h *HTMLExporter) exportBlock(b ast.Block) error {
+	if b.GetAlignment() != ast.NoAlign {
+		switch b.GetAlignment() {
+		case ast.LeftAlign:
+			h.stream.Write([]byte("<div style=\"text-align: left\">"))
+			break
+		case ast.RightAlign:
+			h.stream.Write([]byte("<div style=\"text-align: right\">"))
+			break
+		case ast.CenterAlign:
+			h.stream.Write([]byte("<div style=\"text-align: center\">"))
+			break
+		default:
+			return errors.New("invalid ast")
+		}
+	} else {
+		h.stream.Write([]byte("<div>"))
+	}
+
+	switch b.(type) {
+	case *ast.Paragraph:
+		// Write the inline block.
+		block := b.(*ast.Paragraph)
+		h.stream.Write([]byte("<p>"))
+		for i := range block.Content {
+			h.exportInlineBlock(block.Content[i])
+		}
+		h.stream.Write([]byte("</p>"))
+	default:
+		return errors.New("invalid ast")
+	}
+
+	h.stream.Write([]byte("</div>\n"))
+	return nil
+}
+
+// Export an inline block to HTMl.
+func (h *HTMLExporter) exportInlineBlock(b ast.InlineBlock) error {
+	switch b.(type) {
+	case string:
+		// Write the content.
+		h.stream.Write([]byte(html.EscapeString(b.(string))))
+	case ast.HyperlinkBlock:
+		// Write the hyperlink.
+		block := b.(ast.HyperlinkBlock)
+		h.stream.Write([]byte("<a href=\"" + block.Destination + "\">"))
+		for i := range block.Content {
+			h.exportInlineBlock(block.Content[i])
+		}
+		h.stream.Write([]byte("</a>"))
+	default:
+		return errors.New("invalid ast")
+	}
+
+	return nil
 }

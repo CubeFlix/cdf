@@ -4,13 +4,14 @@
 package main
 
 import (
-	"fmt"
+	"os"
 
+	"github.com/cubeflix/cdf/export/html"
 	"github.com/cubeflix/cdf/parser"
 )
 
 var code string = `
-[[cdf]]
+[[cdf title=hello]]
 [[p align=left]]ageni:
 [[link dest=https://google.com]]hello paragraph[[/]] gensp gn[[/]]
 [[/]]
@@ -22,5 +23,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(p.Tree.Content[0])
+	h := html.NewHTMLExporter(os.Stdout, html.HTMLSettings{})
+	err = h.Export(&p.Tree)
+	if err != nil {
+		panic(err)
+	}
 }

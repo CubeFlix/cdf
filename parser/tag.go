@@ -218,3 +218,19 @@ func (p *Parser) tagGetAlignment(t tagItem) (ast.AlignmentType, error) {
 	}
 	return ast.NoAlign, nil
 }
+
+// Fill in the document's fields from the header tag.
+func (p *Parser) tagGetDocumentFields(t tagItem) {
+	if title, ok := t.Attributes["title"]; ok {
+		p.Tree.Title = title
+	}
+	if st, ok := t.Attributes["subtitle"]; ok {
+		p.Tree.Subtitle = st
+	}
+	if date, ok := t.Attributes["date"]; ok {
+		p.Tree.Date = date
+	}
+	if author, ok := t.Attributes["author"]; ok {
+		p.Tree.Author = author
+	}
+}

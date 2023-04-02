@@ -9,5 +9,6 @@ import "github.com/cubeflix/cdf/export"
 type HTMLSettings struct {
 	export.Settings
 
-	// Reserved for future use.
+	IncludeHeader bool
+	IncludeFooter bool
 }

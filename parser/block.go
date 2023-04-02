@@ -81,9 +81,11 @@ func (p *Parser) parseParagraphBlockContent() ([]ast.InlineBlock, error) {
 			// Check for a '[['.
 			if p.data[p.cur+chunkLen] == '[' && p.data[p.cur+chunkLen+1] == '[' {
 				// End the chunk.
-				chunk := p.data[p.cur : p.cur+chunkLen]
-				p.cur += chunkLen
-				blocks = append(blocks, escapeText(chunk))
+				if chunkLen != 0 {
+					chunk := p.data[p.cur : p.cur+chunkLen]
+					p.cur += chunkLen
+					blocks = append(blocks, escapeText(chunk))
+				}
 
 				// Parse the tag.
 				tag, err := p.parseTag()

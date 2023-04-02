@@ -57,6 +57,7 @@ func (p *Parser) Parse() error {
 	if openingTag.Name != "cdf" {
 		return errors.New("expected a 'cdf' tag")
 	}
+	p.tagGetDocumentFields(openingTag)
 
 	// Read the block's contents.
 	content, err := p.parseBlockContent()

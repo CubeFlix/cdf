@@ -5,5 +5,8 @@ package export
 
 // CDF export settings.
 type Settings struct {
-	// Reserved for future use.
+	OmitTitle    bool
+	OmitSubtitle bool
+	OmitDate     bool
+	OmitAuthor   bool
 }

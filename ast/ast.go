@@ -8,13 +8,13 @@ import "image/color"
 // CDF document.
 type Document struct {
 	// Document information.
-	Title     string
-	Subtitle  string
-	Date      string
-	Author    string
-	Copyright string
-	Header    string
-	Footer    string
+	Title    string
+	Subtitle string
+	Date     string
+	Author   string
+
+	Header *InlineBlock
+	Footer *InlineBlock
 
 	// The blocks in the document.
 	Content []Block
@@ -22,19 +22,17 @@ type Document struct {
 
 // Block for AST.
 type Block interface {
-	Parent() Block
+	GetAlignment() AlignmentType
 }
 
 // Base block.
 type BaseBlock struct {
 	Alignment AlignmentType
-
-	BlockParent Block
 }
 
-// Return the parent block.
-func (b *BaseBlock) Parent() Block {
-	return b.BlockParent
+// Get alignment.
+func (b *BaseBlock) GetAlignment() AlignmentType {
+	return b.Alignment
 }
 
 // Block alignment types.
