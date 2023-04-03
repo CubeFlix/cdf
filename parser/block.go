@@ -35,6 +35,12 @@ func (p *Parser) parseBlockContent() ([]ast.Block, error) {
 			return blocks, nil
 		}
 
+		// Get the alignment information from the tag.
+		alignment, err := p.tagGetAlignment(tag)
+		if err != nil {
+			return nil, err
+		}
+
 		// Parse the inner block.
 		if tag.Name == "p" {
 			// Paragraph block.
@@ -43,21 +49,74 @@ func (p *Parser) parseBlockContent() ([]ast.Block, error) {
 				return nil, err
 			}
 
-			// Get the alignment information from the tag.
-			alignment, err := p.tagGetAlignment(tag)
+			blocks = append(blocks, &ast.Paragraph{
+				BaseBlock: ast.BaseBlock{Alignment: alignment},
+				Content:   content,
+			})
+		} else if tag.Name == "block" {
+			// Basic block.
+			content, err := p.parseBlockContent()
 			if err != nil {
 				return nil, err
 			}
 
-			blocks = append(blocks, &ast.Paragraph{
+			blocks = append(blocks, &ast.BasicBlock{
 				BaseBlock: ast.BaseBlock{Alignment: alignment},
 				Content:   content,
+			})
+		} else if tag.Name == "quote" {
+			// Quote block.
+			content, err := p.parseBlockContent()
+			if err != nil {
+				return nil, err
+			}
+
+			blocks = append(blocks, &ast.Quote{
+				BaseBlock: ast.BaseBlock{Alignment: alignment},
+				Content:   content,
+			})
+		} else if tag.Name == "h" {
+			// Heading block.
+			class, err := p.generateHeadingClass(tag)
+			if err != nil {
+				return nil, err
+			}
+			content, err := p.parseParagraphBlockContent()
+			if err != nil {
+				return nil, err
+			}
+
+			blocks = append(blocks, &ast.Heading{
+				BaseBlock: ast.BaseBlock{Alignment: alignment},
+				Content:   content,
+				Class:     class,
 			})
 		} else {
 			// Invalid block type.
 			return nil, errors.New("invalid block type")
 		}
 	}
+}
+
+// Get the heading class given a heading tag.
+func (p *Parser) generateHeadingClass(t tagItem) (ast.HeadingType, error) {
+	if class, ok := t.Attributes["c"]; ok {
+		switch class {
+		case "1":
+			return ast.Heading1Type, nil
+		case "2":
+			return ast.Heading2Type, nil
+		case "3":
+			return ast.Heading3Type, nil
+		case "4":
+			return ast.Heading4Type, nil
+		case "5":
+			return ast.Heading5Type, nil
+		default:
+			return 0, errors.New("'h' tag expected a valid class (1-5)")
+		}
+	}
+	return 0, errors.New("'h' tag expected a class ('c')")
 }
 
 // Parse the content in a paragraph block.

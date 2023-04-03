@@ -21,6 +21,10 @@ type HTMLExporter struct {
 
 // Create a new HTML exporter.
 func NewHTMLExporter(stream io.Writer, settings HTMLSettings) *HTMLExporter {
+	if !settings.UseCustomQuoteBlockClass {
+		settings.QuoteBlockClass = DefaultQuoteBlockClass
+	}
+
 	return &HTMLExporter{
 		stream:   stream,
 		settings: settings,
@@ -69,6 +73,7 @@ func (h *HTMLExporter) Export(d *ast.Document) error {
 
 	// Write the header.
 	if h.settings.IncludeHeader {
+		// TODO
 	}
 
 	// Write the content.
@@ -79,47 +84,106 @@ func (h *HTMLExporter) Export(d *ast.Document) error {
 		}
 	}
 
+	// Write the footer.
+	if h.settings.IncludeFooter {
+		// TODO
+	}
+
 	return nil
 }
 
 // Export a block to HTML.
 func (h *HTMLExporter) exportBlock(b ast.Block) error {
-	if b.GetAlignment() != ast.NoAlign {
-		switch b.GetAlignment() {
-		case ast.LeftAlign:
-			h.stream.Write([]byte("<div style=\"text-align: left\">"))
-			break
-		case ast.RightAlign:
-			h.stream.Write([]byte("<div style=\"text-align: right\">"))
-			break
-		case ast.CenterAlign:
-			h.stream.Write([]byte("<div style=\"text-align: center\">"))
-			break
-		default:
-			return errors.New("invalid ast")
-		}
-	} else {
-		h.stream.Write([]byte("<div>"))
+	alignmentStyle, err := getHTMLAlignmentStyleParameter(b)
+	if err != nil {
+		return err
 	}
 
 	switch b.(type) {
 	case *ast.Paragraph:
 		// Write the inline block.
 		block := b.(*ast.Paragraph)
-		h.stream.Write([]byte("<p>"))
+		h.stream.Write([]byte("<p" + wrapHTMLStyleParameter(alignmentStyle) + ">"))
 		for i := range block.Content {
 			err := h.exportInlineBlock(block.Content[i])
 			if err != nil {
 				return err
 			}
 		}
-		h.stream.Write([]byte("</p>"))
+		h.stream.Write([]byte("</p>\n"))
+		break
+	case *ast.BasicBlock:
+		// Write the basic block.
+		block := b.(*ast.BasicBlock)
+		h.stream.Write([]byte("<div" + wrapHTMLStyleParameter(alignmentStyle) + ">"))
+		for i := range block.Content {
+			err := h.exportBlock(block.Content[i])
+			if err != nil {
+				return err
+			}
+		}
+		h.stream.Write([]byte("</div>\n"))
+		break
+	case *ast.Quote:
+		// Write the quote block.
+		block := b.(*ast.Quote)
+		h.stream.Write([]byte("<div" + wrapHTMLStyleParameter(alignmentStyle) + " class=\"" + h.settings.QuoteBlockClass + "\">"))
+		for i := range block.Content {
+			err := h.exportBlock(block.Content[i])
+			if err != nil {
+				return err
+			}
+		}
+		h.stream.Write([]byte("</div>\n"))
+		break
+	case *ast.Heading:
+		// Write the heading block.
+		block := b.(*ast.Heading)
+		headingClass, err := getHTMLHeaderType(block)
+		if err != nil {
+			return err
+		}
+		h.stream.Write([]byte("<" + headingClass + wrapHTMLStyleParameter(alignmentStyle) + ">"))
+		for i := range block.Content {
+			err := h.exportInlineBlock(block.Content[i])
+			if err != nil {
+				return err
+			}
+		}
+		h.stream.Write([]byte("</" + headingClass + ">\n"))
 	default:
 		return errors.New("invalid ast")
 	}
 
-	h.stream.Write([]byte("</div>\n"))
 	return nil
+}
+
+// Get the div's optional alignment style. Return an empty string if no
+// alignment is provided.
+func getHTMLAlignmentStyleParameter(b ast.Block) (string, error) {
+	if b.GetAlignment() != ast.NoAlign {
+		switch b.GetAlignment() {
+		case ast.LeftAlign:
+			return "text-align: left;", nil
+		case ast.RightAlign:
+			return "text-align: right;", nil
+		case ast.CenterAlign:
+			return "text-align: center;", nil
+		default:
+			return "", errors.New("invalid ast")
+		}
+	} else {
+		return "", nil
+	}
+}
+
+// Wrap the style information in " style=\"\"". Returns an empty string if no
+// style information is provided.
+func wrapHTMLStyleParameter(style string) string {
+	if len(strings.TrimSpace(style)) == 0 {
+		return ""
+	}
+	return " style=\"" + style + "\""
 }
 
 // Export an inline block to HTMl.
@@ -248,4 +312,21 @@ func getHTMLColorStyleParameter(b *ast.ColorBlock) string {
 		param += "background-color: " + b.BackgroundValue.String() + ";"
 	}
 	return param
+}
+
+// Get the header type "h1" - "h5" for a header block.
+func getHTMLHeaderType(b *ast.Heading) (string, error) {
+	switch b.Class {
+	case ast.Heading1Type:
+		return "h1", nil
+	case ast.Heading2Type:
+		return "h2", nil
+	case ast.Heading3Type:
+		return "h3", nil
+	case ast.Heading4Type:
+		return "h4", nil
+	case ast.Heading5Type:
+		return "h5", nil
+	}
+	return "", errors.New("invalid ast")
 }

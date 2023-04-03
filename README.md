@@ -11,3 +11,10 @@ Cubeflix Document Format
 ## AST
 
 The AST is structured into a *document*, containing *blocks*. A *block*, like a paragraph, may contain *inline blocks* or more blocks.
+
+## Todo
+
+* headers/footers
+* image
+* header
+* horizontal rule
