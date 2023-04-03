@@ -18,7 +18,7 @@ t!![[/]]ens\\p gn\[[/]][[/]]
 
 [[p align=right]]
 hello! [[b]]BOLD[[/]] [[i]]italic[[/]]
-[[t]]teletype![[/]]
+[[t]]teletype![[/]][[size percent=10]]big TEXT![[/]]
 [[/]]
 
 [[/]]

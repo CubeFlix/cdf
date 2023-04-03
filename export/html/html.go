@@ -5,6 +5,7 @@ package html
 
 import (
 	"errors"
+	"fmt"
 	"html"
 	"io"
 	"strings"
@@ -143,7 +144,7 @@ func (h *HTMLExporter) exportInlineBlock(b ast.InlineBlock) error {
 	case ast.FormattingBlock:
 		// Write the formatting.
 		block := b.(ast.FormattingBlock)
-		attrName, err := getHTMLFormattingTagName(block)
+		attrName, err := getHTMLFormattingTagName(&block)
 		if err != nil {
 			return err
 		}
@@ -156,6 +157,22 @@ func (h *HTMLExporter) exportInlineBlock(b ast.InlineBlock) error {
 		}
 		h.stream.Write([]byte("</" + attrName + ">"))
 		break
+	case ast.SizeBlock:
+		// Write the size block.
+		block := b.(ast.SizeBlock)
+		paramValue, err := getHTMLFontSizeParameter(&block)
+		if err != nil {
+			return err
+		}
+		h.stream.Write([]byte("<span style=\"font-size: " + paramValue + "\">"))
+		for i := range block.Content {
+			err = h.exportInlineBlock(block.Content[i])
+			if err != nil {
+				return err
+			}
+		}
+		h.stream.Write([]byte("</span>"))
+		break
 	default:
 		return errors.New("invalid ast")
 	}
@@ -164,7 +181,7 @@ func (h *HTMLExporter) exportInlineBlock(b ast.InlineBlock) error {
 }
 
 // Get the tag name for a formatting block.
-func getHTMLFormattingTagName(b ast.FormattingBlock) (string, error) {
+func getHTMLFormattingTagName(b *ast.FormattingBlock) (string, error) {
 	switch b.Attribute {
 	case ast.BoldFormatting:
 		return "b", nil
@@ -176,7 +193,23 @@ func getHTMLFormattingTagName(b ast.FormattingBlock) (string, error) {
 		return "u", nil
 	case ast.TeletypeFormatting:
 		return "code", nil
-	default:
-		return "", errors.New("invalid ast")
 	}
+	return "", errors.New("invalid ast")
+}
+
+// Get the font-size parameter for a size block.
+func getHTMLFontSizeParameter(b *ast.SizeBlock) (string, error) {
+	switch b.Type {
+	case ast.PercentageSizeType:
+		return fmt.Sprintf("%f%%", b.Value), nil
+	case ast.PixelSizeType:
+		return fmt.Sprintf("%fpx", b.Value), nil
+	case ast.PointSizeType:
+		return fmt.Sprintf("%fpt", b.Value), nil
+	case ast.CentimeterSizeType:
+		return fmt.Sprintf("%fcm", b.Value), nil
+	case ast.MillimeterSizeType:
+		return fmt.Sprintf("%fmm", b.Value), nil
+	}
+	return "", errors.New("invalid ast")
 }

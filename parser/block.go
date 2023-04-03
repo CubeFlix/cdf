@@ -6,6 +6,7 @@ package parser
 import (
 	"errors"
 	"io"
+	"strconv"
 	"strings"
 
 	"github.com/cubeflix/cdf/ast"
@@ -132,6 +133,15 @@ func (p *Parser) parseParagraphBlockContent() ([]ast.InlineBlock, error) {
 				} else if tag.Name == "t" {
 					// Teletype text.
 					blocks = append(blocks, ast.FormattingBlock{BaseInlineBlock: ast.BaseInlineBlock{Content: content}, Attribute: ast.TeletypeFormatting})
+				} else if tag.Name == "size" {
+					// Size block.
+
+					// Get the size information.
+					sizeVal, sizeType, err := p.generateSizeBlock(tag)
+					if err != nil {
+						return nil, err
+					}
+					blocks = append(blocks, ast.SizeBlock{BaseInlineBlock: ast.BaseInlineBlock{Content: content}, Value: sizeVal, Type: sizeType})
 				} else {
 					return nil, errors.New("invalid tag type")
 				}
@@ -140,5 +150,54 @@ func (p *Parser) parseParagraphBlockContent() ([]ast.InlineBlock, error) {
 				chunkLen++
 			}
 		}
+	}
+}
+
+// Get the size block information from a tag. Returns the size value and the
+// size unit.
+func (p *Parser) generateSizeBlock(t tagItem) (float32, ast.SizeType, error) {
+	// Ensure that there is only one attribute in the tag.
+	if len(t.Attributes) != 1 {
+		return 0, 0, errors.New("'size' tag should contain one parameter")
+	}
+
+	if val, ok := t.Attributes["percent"]; ok {
+		// Percentage.
+		floatVal, err := strconv.ParseFloat(val, 32)
+		if err != nil {
+			return 0, 0, err
+		}
+		return float32(floatVal), ast.PercentageSizeType, nil
+	} else if val, ok := t.Attributes["px"]; ok {
+		// Pixels.
+		floatVal, err := strconv.ParseFloat(val, 32)
+		if err != nil {
+			return 0, 0, err
+		}
+		return float32(floatVal), ast.PixelSizeType, nil
+	} else if val, ok := t.Attributes["pt"]; ok {
+		// Points.
+		floatVal, err := strconv.ParseFloat(val, 32)
+		if err != nil {
+			return 0, 0, err
+		}
+		return float32(floatVal), ast.PointSizeType, nil
+	} else if val, ok := t.Attributes["cm"]; ok {
+		// Centimeters.
+		floatVal, err := strconv.ParseFloat(val, 32)
+		if err != nil {
+			return 0, 0, err
+		}
+		return float32(floatVal), ast.CentimeterSizeType, nil
+	} else if val, ok := t.Attributes["mm"]; ok {
+		// Millimeters.
+		floatVal, err := strconv.ParseFloat(val, 32)
+		if err != nil {
+			return 0, 0, err
+		}
+		return float32(floatVal), ast.MillimeterSizeType, nil
+	} else {
+		// Invalid tag parameters.
+		return 0, 0, errors.New("'size' tag should contain a valid size parameter ('percent', 'px', 'pt', 'cm', 'mm')")
 	}
 }

@@ -105,6 +105,16 @@ type SizeBlock struct {
 type SizeType int64
 
 const (
-	PercentageType SizeType = iota
-	PixelType
+	PercentageSizeType SizeType = iota
+	PixelSizeType
+	PointSizeType
+	CentimeterSizeType
+	MillimeterSizeType
 )
+
+// Font block.
+type FontBlock struct {
+	BaseInlineBlock
+
+	Family string
+}
