@@ -13,9 +13,6 @@ type Document struct {
 	Date     string
 	Author   string
 
-	Header *InlineBlock
-	Footer *InlineBlock
-
 	// The blocks in the document.
 	Content []Block
 }

@@ -27,7 +27,7 @@ hello! [[b]]BOLD[[/]] [[i]]italic[[/]]
 [[image src=https://scp-wiki.wdfiles.com/local--files/scp-5956/REISNOCANNON.jpg|width-percent=10|align=center]][[/]]
 [[image src=https://scp-wiki.wdfiles.com/local--files/scp-5956/REISNOCANNON.jpg|width-percent=10|align=center|has-caption=true]]example image[[/]]
 
-[[h c=2]]Big heading![[/]]
+[[h c=2|align=right]]Big heading![[/]]
 [[hr]][[/]]
 
 [[image src=https://scp-wiki.wdfiles.com/local--files/scp-5956/REISNOCANNON.jpg|width-px=150|has-caption=true|wrap=yes|align=right]]caption![[/]]
