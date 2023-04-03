@@ -178,6 +178,10 @@ func (h *HTMLExporter) exportBlock(b ast.Block) error {
 		}
 		h.stream.Write([]byte("</" + headingClass + ">\n"))
 		break
+	case *ast.HorizontalRule:
+		// Write the horizontal rule.
+		h.stream.Write([]byte("<hr>\n"))
+		break
 	default:
 		return errors.New("invalid ast")
 	}

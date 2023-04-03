@@ -128,6 +128,15 @@ func (p *Parser) parseBlockContent() ([]ast.Block, error) {
 				Content:   content,
 				Class:     class,
 			})
+		} else if tag.Name == "hr" {
+			// Horizontal rule.
+			_, err := p.parseParagraphBlockContent()
+			if err != nil {
+				return nil, err
+			}
+			blocks = append(blocks, &ast.HorizontalRule{
+				BaseBlock: ast.BaseBlock{Alignment: alignment, Wrap: shouldWrap},
+			})
 		} else {
 			// Invalid block type.
 			return nil, errors.New("invalid block type")
