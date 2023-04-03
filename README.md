@@ -1,16 +1,17 @@
-# cdf
+# cdf: Cubeflix Document Format
 
-Cubeflix Document Format
+A CDF document is structured as a tree, containing *blocks*. A *block*, like a paragraph or image, may contain *inline blocks* or more blocks.
 
-```
-[[b]]hello, world![[/]] this is [[t]]teletype[[/]]
-```
+## Pages
 
-*hello, world!* this is `teletype`
+CDF pages is a server that allows for the hosting and creation of CDF documents. A CDF pages project contains the following files:
 
-## AST
-
-The AST is structured into a *document*, containing *blocks*. A *block*, like a paragraph, may contain *inline blocks* or more blocks.
+* `template.html`: the base page template
+* `404.html`: 404 template
+* `invalid.html`: invalid page template
+* `pages/`: all page sources
+* `pages/index.cdf`: index page
+* `static/`: static files
 
 ## Todo
 
