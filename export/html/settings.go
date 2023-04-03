@@ -6,9 +6,9 @@ package html
 import "github.com/cubeflix/cdf/export"
 
 const (
-	DefaultQuoteBlockClass          = "quote"
-	DefaultCaptionedImageBlockClass = "image-block"
-	DefaultImageCaptionClass        = "image-caption"
+	DefaultQuoteBlockClass   = "quote"
+	DefaultImageBlockClass   = "image-block"
+	DefaultImageCaptionClass = "image-caption"
 )
 
 // HTML export settings.
@@ -21,8 +21,8 @@ type HTMLSettings struct {
 	UseCustomQuoteBlockClass bool
 	QuoteBlockClass          string
 
-	UseCustomCaptionedImageBlockClass bool
-	CaptionedImageBlockClass          string
+	UseCustomImageBlockClass bool
+	ImageBlockClass          string
 
 	UseCustomImageCaptionClass bool
 	ImageCaptionClass          string

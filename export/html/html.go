@@ -24,8 +24,8 @@ func NewHTMLExporter(stream io.Writer, settings HTMLSettings) *HTMLExporter {
 	if !settings.UseCustomQuoteBlockClass {
 		settings.QuoteBlockClass = DefaultQuoteBlockClass
 	}
-	if !settings.UseCustomCaptionedImageBlockClass {
-		settings.CaptionedImageBlockClass = DefaultCaptionedImageBlockClass
+	if !settings.UseCustomImageBlockClass {
+		settings.ImageBlockClass = DefaultImageBlockClass
 	}
 	if !settings.UseCustomImageCaptionClass {
 		settings.ImageCaptionClass = DefaultImageCaptionClass
@@ -150,7 +150,7 @@ func (h *HTMLExporter) exportBlock(b ast.Block) error {
 			return err
 		}
 		if block.HasCaption {
-			h.stream.Write([]byte("<div" + wrapHTMLStyleParameter(alignmentStyle) + " class=\"" + h.settings.CaptionedImageBlockClass + "\"><img" + wrapHTMLStyleParameter(sizeStyle) + " src=\"" + block.Source + "\"><div class=\"" + h.settings.ImageCaptionClass + "\">"))
+			h.stream.Write([]byte("<div" + wrapHTMLStyleParameter(alignmentStyle) + " class=\"" + h.settings.ImageBlockClass + "\"><img" + wrapHTMLStyleParameter(sizeStyle) + " src=\"" + block.Source + "\"><div class=\"" + h.settings.ImageCaptionClass + "\">"))
 			for i := range block.Caption {
 				err := h.exportInlineBlock(block.Caption[i])
 				if err != nil {
@@ -159,7 +159,7 @@ func (h *HTMLExporter) exportBlock(b ast.Block) error {
 			}
 			h.stream.Write([]byte("</div></div>\n"))
 		} else {
-			h.stream.Write([]byte("<img" + wrapHTMLStyleParameter(alignmentStyle+sizeStyle) + " src=\"" + block.Source + "\">\n"))
+			h.stream.Write([]byte("<div" + wrapHTMLStyleParameter(alignmentStyle) + " class=\"" + h.settings.ImageBlockClass + "\"><img" + wrapHTMLStyleParameter(sizeStyle) + " src=\"" + block.Source + "\"></div>\n"))
 		}
 		break
 	case *ast.Heading:
