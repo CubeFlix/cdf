@@ -116,7 +116,7 @@ func (p *Parser) parseParagraphBlockContent() ([]ast.InlineBlock, error) {
 							Destination:     strings.ReplaceAll(dest, "\n", ""),
 						})
 					} else {
-						return nil, errors.New("expected a 'dest' attribute")
+						return nil, errors.New("'link' tag expected a 'dest' attribute")
 					}
 				} else if tag.Name == "b" {
 					// Bold text.
@@ -142,6 +142,18 @@ func (p *Parser) parseParagraphBlockContent() ([]ast.InlineBlock, error) {
 						return nil, err
 					}
 					blocks = append(blocks, ast.SizeBlock{BaseInlineBlock: ast.BaseInlineBlock{Content: content}, Value: sizeVal, Type: sizeType})
+				} else if tag.Name == "font" {
+					// Font block.
+
+					// Get the font family.
+					if family, ok := tag.Attributes["family"]; ok {
+						blocks = append(blocks, ast.FontBlock{
+							BaseInlineBlock: ast.BaseInlineBlock{Content: content},
+							Family:          strings.ReplaceAll(family, "\n", ""),
+						})
+					} else {
+						return nil, errors.New("'font' tag expected a 'family' attribute")
+					}
 				} else {
 					return nil, errors.New("invalid tag type")
 				}

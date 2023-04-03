@@ -173,6 +173,18 @@ func (h *HTMLExporter) exportInlineBlock(b ast.InlineBlock) error {
 		}
 		h.stream.Write([]byte("</span>"))
 		break
+	case ast.FontBlock:
+		// Write the font block.
+		block := b.(ast.FontBlock)
+		h.stream.Write([]byte("<span style=\"font-family: " + block.Family + "\">"))
+		for i := range block.Content {
+			err := h.exportInlineBlock(block.Content[i])
+			if err != nil {
+				return err
+			}
+		}
+		h.stream.Write([]byte("</span>"))
+		break
 	default:
 		return errors.New("invalid ast")
 	}
