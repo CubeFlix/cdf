@@ -41,6 +41,9 @@ func (p *Parser) parseBlockContent() ([]ast.Block, error) {
 			return nil, err
 		}
 
+		// Check if we should wrap the block.
+		_, shouldWrap := tag.Attributes["wrap"]
+
 		// Parse the inner block.
 		if tag.Name == "p" {
 			// Paragraph block.
@@ -50,7 +53,7 @@ func (p *Parser) parseBlockContent() ([]ast.Block, error) {
 			}
 
 			blocks = append(blocks, &ast.Paragraph{
-				BaseBlock: ast.BaseBlock{Alignment: alignment},
+				BaseBlock: ast.BaseBlock{Alignment: alignment, Wrap: shouldWrap},
 				Content:   content,
 			})
 		} else if tag.Name == "block" {
@@ -61,7 +64,7 @@ func (p *Parser) parseBlockContent() ([]ast.Block, error) {
 			}
 
 			blocks = append(blocks, &ast.BasicBlock{
-				BaseBlock: ast.BaseBlock{Alignment: alignment},
+				BaseBlock: ast.BaseBlock{Alignment: alignment, Wrap: shouldWrap},
 				Content:   content,
 			})
 		} else if tag.Name == "quote" {
@@ -72,8 +75,42 @@ func (p *Parser) parseBlockContent() ([]ast.Block, error) {
 			}
 
 			blocks = append(blocks, &ast.Quote{
-				BaseBlock: ast.BaseBlock{Alignment: alignment},
+				BaseBlock: ast.BaseBlock{Alignment: alignment, Wrap: shouldWrap},
 				Content:   content,
+			})
+		} else if tag.Name == "image" {
+			// Image block.
+
+			// Get the source.
+			imgSrc, ok := tag.Attributes["src"]
+			if !ok {
+				return nil, errors.New("'image' tag expects a 'src' attribute")
+			}
+
+			// Check if we should include the caption.
+			_, hasCaption := tag.Attributes["has-caption"]
+
+			a, b, c, d, e, f, err := p.generateImageBlock(tag)
+			if err != nil {
+				return nil, err
+			}
+
+			content, err := p.parseParagraphBlockContent()
+			if err != nil {
+				return nil, err
+			}
+
+			blocks = append(blocks, &ast.Image{
+				BaseBlock:          ast.BaseBlock{Alignment: alignment, Wrap: shouldWrap},
+				Source:             strings.ReplaceAll(imgSrc, "\n", ""),
+				HasCaption:         hasCaption,
+				Caption:            content,
+				HasWidthParameter:  a,
+				WidthValue:         b,
+				WidthType:          c,
+				HasHeightParameter: d,
+				HeightValue:        e,
+				HeightType:         f,
 			})
 		} else if tag.Name == "h" {
 			// Heading block.
@@ -87,7 +124,7 @@ func (p *Parser) parseBlockContent() ([]ast.Block, error) {
 			}
 
 			blocks = append(blocks, &ast.Heading{
-				BaseBlock: ast.BaseBlock{Alignment: alignment},
+				BaseBlock: ast.BaseBlock{Alignment: alignment, Wrap: shouldWrap},
 				Content:   content,
 				Class:     class,
 			})
@@ -314,4 +351,108 @@ func (p *Parser) generateColorBlock(t tagItem) (colors.Color, colors.Color, erro
 	}
 
 	return fore, back, nil
+}
+
+// Get the size information for the image block. Returns the width size
+// information and the height size information.
+func (p *Parser) generateImageBlock(t tagItem) (bool, float32, ast.SizeType, bool, float32, ast.SizeType, error) {
+	var hasWidth, hasHeight bool
+	var widthVal, heightVal float32
+	var widthType, heightType ast.SizeType
+
+	if val, ok := t.Attributes["width-percent"]; ok {
+		// Percentage.
+		floatVal, err := strconv.ParseFloat(val, 32)
+		if err != nil {
+			return false, 0, 0, false, 0, 0, err
+		}
+		hasWidth = true
+		widthVal = float32(floatVal)
+		widthType = ast.PercentageSizeType
+	} else if val, ok := t.Attributes["width-px"]; ok {
+		// Pixels.
+		floatVal, err := strconv.ParseFloat(val, 32)
+		if err != nil {
+			return false, 0, 0, false, 0, 0, err
+		}
+		hasWidth = true
+		widthVal = float32(floatVal)
+		widthType = ast.PixelSizeType
+	} else if val, ok := t.Attributes["width-pt"]; ok {
+		// Points.
+		floatVal, err := strconv.ParseFloat(val, 32)
+		if err != nil {
+			return false, 0, 0, false, 0, 0, err
+		}
+		hasWidth = true
+		widthVal = float32(floatVal)
+		widthType = ast.PointSizeType
+	} else if val, ok := t.Attributes["width-cm"]; ok {
+		// Centimeters.
+		floatVal, err := strconv.ParseFloat(val, 32)
+		if err != nil {
+			return false, 0, 0, false, 0, 0, err
+		}
+		hasWidth = true
+		widthVal = float32(floatVal)
+		widthType = ast.CentimeterSizeType
+	} else if val, ok := t.Attributes["width-mm"]; ok {
+		// Millimeters.
+		floatVal, err := strconv.ParseFloat(val, 32)
+		if err != nil {
+			return false, 0, 0, false, 0, 0, err
+		}
+		hasWidth = true
+		widthVal = float32(floatVal)
+		widthType = ast.MillimeterSizeType
+	}
+
+	if val, ok := t.Attributes["height-percent"]; ok {
+		// Percentage.
+		floatVal, err := strconv.ParseFloat(val, 32)
+		if err != nil {
+			return false, 0, 0, false, 0, 0, err
+		}
+		hasHeight = true
+		heightVal = float32(floatVal)
+		heightType = ast.PercentageSizeType
+	} else if val, ok := t.Attributes["height-px"]; ok {
+		// Pixels.
+		floatVal, err := strconv.ParseFloat(val, 32)
+		if err != nil {
+			return false, 0, 0, false, 0, 0, err
+		}
+		hasHeight = true
+		heightVal = float32(floatVal)
+		heightType = ast.PixelSizeType
+	} else if val, ok := t.Attributes["height-pt"]; ok {
+		// Points.
+		floatVal, err := strconv.ParseFloat(val, 32)
+		if err != nil {
+			return false, 0, 0, false, 0, 0, err
+		}
+		hasHeight = true
+		heightVal = float32(floatVal)
+		heightType = ast.PointSizeType
+	} else if val, ok := t.Attributes["height-cm"]; ok {
+		// Centimeters.
+		floatVal, err := strconv.ParseFloat(val, 32)
+		if err != nil {
+			return false, 0, 0, false, 0, 0, err
+		}
+		hasHeight = true
+		heightVal = float32(floatVal)
+		heightType = ast.CentimeterSizeType
+	} else if val, ok := t.Attributes["height-mm"]; ok {
+		// Millimeters.
+		floatVal, err := strconv.ParseFloat(val, 32)
+		if err != nil {
+			return false, 0, 0, false, 0, 0, err
+		}
+		hasHeight = true
+		heightVal = float32(floatVal)
+		heightType = ast.MillimeterSizeType
+	}
+
+	return hasWidth, widthVal, widthType, hasHeight, heightVal, heightType, nil
 }

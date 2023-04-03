@@ -26,6 +26,8 @@ hello! [[b]]BOLD[[/]] [[i]]italic[[/]]
 
 [[h c=2]]Big heading![[/]]
 
+[[image src=https://scp-wiki.wdfiles.com/local--files/scp-5956/REISNOCANNON.jpg|width-px=150|has-caption=true|wrap=yes|align=right]]caption![[/]]
+
 [[quote align=left]][[p]][[b]]Item #:[[/]] SCP-173[[/]]
 [[p]][[b]]Object Class:[[/]] Euclid[[/]]
 

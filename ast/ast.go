@@ -23,16 +23,23 @@ type Document struct {
 // Block for AST.
 type Block interface {
 	GetAlignment() AlignmentType
+	GetWrap() bool
 }
 
 // Base block.
 type BaseBlock struct {
 	Alignment AlignmentType
+	Wrap      bool
 }
 
 // Get alignment.
 func (b *BaseBlock) GetAlignment() AlignmentType {
 	return b.Alignment
+}
+
+// Get wrap settings.
+func (b *BaseBlock) GetWrap() bool {
+	return b.Wrap
 }
 
 // Block alignment types.
@@ -73,6 +80,14 @@ type Image struct {
 	Source     string
 	HasCaption bool
 	Caption    []InlineBlock
+
+	// Image size information.
+	HasWidthParameter  bool
+	WidthValue         float32
+	WidthType          SizeType
+	HasHeightParameter bool
+	HeightValue        float32
+	HeightType         SizeType
 }
 
 // Heading block struct for AST.

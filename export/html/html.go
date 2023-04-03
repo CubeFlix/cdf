@@ -24,6 +24,12 @@ func NewHTMLExporter(stream io.Writer, settings HTMLSettings) *HTMLExporter {
 	if !settings.UseCustomQuoteBlockClass {
 		settings.QuoteBlockClass = DefaultQuoteBlockClass
 	}
+	if !settings.UseCustomCaptionedImageBlockClass {
+		settings.CaptionedImageBlockClass = DefaultCaptionedImageBlockClass
+	}
+	if !settings.UseCustomImageCaptionClass {
+		settings.ImageCaptionClass = DefaultImageCaptionClass
+	}
 
 	return &HTMLExporter{
 		stream:   stream,
@@ -136,6 +142,26 @@ func (h *HTMLExporter) exportBlock(b ast.Block) error {
 		}
 		h.stream.Write([]byte("</div>\n"))
 		break
+	case *ast.Image:
+		// Write the image block.
+		block := b.(*ast.Image)
+		sizeStyle, err := getHTMLImageWidthHeightStyleParameter(block)
+		if err != nil {
+			return err
+		}
+		if block.HasCaption {
+			h.stream.Write([]byte("<div" + wrapHTMLStyleParameter(alignmentStyle) + " class=\"" + h.settings.CaptionedImageBlockClass + "\"><img" + wrapHTMLStyleParameter(sizeStyle) + " src=\"" + block.Source + "\"><div class=\"" + h.settings.ImageCaptionClass + "\">"))
+			for i := range block.Caption {
+				err := h.exportInlineBlock(block.Caption[i])
+				if err != nil {
+					return err
+				}
+			}
+			h.stream.Write([]byte("</div></div>\n"))
+		} else {
+			h.stream.Write([]byte("<img" + wrapHTMLStyleParameter(alignmentStyle+sizeStyle) + " src=\"" + block.Source + "\">\n"))
+		}
+		break
 	case *ast.Heading:
 		// Write the heading block.
 		block := b.(*ast.Heading)
@@ -151,6 +177,7 @@ func (h *HTMLExporter) exportBlock(b ast.Block) error {
 			}
 		}
 		h.stream.Write([]byte("</" + headingClass + ">\n"))
+		break
 	default:
 		return errors.New("invalid ast")
 	}
@@ -162,6 +189,18 @@ func (h *HTMLExporter) exportBlock(b ast.Block) error {
 // alignment is provided.
 func getHTMLAlignmentStyleParameter(b ast.Block) (string, error) {
 	if b.GetAlignment() != ast.NoAlign {
+		if b.GetWrap() {
+			switch b.GetAlignment() {
+			case ast.LeftAlign:
+				return "float: left;", nil
+			case ast.RightAlign:
+				return "float: right;", nil
+			case ast.CenterAlign:
+				return "float: center;", nil
+			default:
+				return "", errors.New("invalid ast")
+			}
+		}
 		switch b.GetAlignment() {
 		case ast.LeftAlign:
 			return "text-align: left;", nil
@@ -175,6 +214,44 @@ func getHTMLAlignmentStyleParameter(b ast.Block) (string, error) {
 	} else {
 		return "", nil
 	}
+}
+
+// Get the style parameters for width and height from an image block.
+func getHTMLImageWidthHeightStyleParameter(b *ast.Image) (string, error) {
+	var param string
+	if b.HasWidthParameter {
+		switch b.WidthType {
+		case ast.PercentageSizeType:
+			param += fmt.Sprintf("width: %f%%;", b.WidthValue)
+		case ast.PixelSizeType:
+			param += fmt.Sprintf("width: %fpx;", b.WidthValue)
+		case ast.PointSizeType:
+			param += fmt.Sprintf("width: %fpt;", b.WidthValue)
+		case ast.CentimeterSizeType:
+			param += fmt.Sprintf("width: %fcm;", b.WidthValue)
+		case ast.MillimeterSizeType:
+			param += fmt.Sprintf("width: %fmm;", b.WidthValue)
+		default:
+			return "", errors.New("invalid ast")
+		}
+	}
+	if b.HasHeightParameter {
+		switch b.HeightType {
+		case ast.PercentageSizeType:
+			param += fmt.Sprintf("height: %f%%;", b.HeightValue)
+		case ast.PixelSizeType:
+			param += fmt.Sprintf("height: %fpx;", b.HeightValue)
+		case ast.PointSizeType:
+			param += fmt.Sprintf("height: %fpt;", b.HeightValue)
+		case ast.CentimeterSizeType:
+			param += fmt.Sprintf("height: %fcm;", b.HeightValue)
+		case ast.MillimeterSizeType:
+			param += fmt.Sprintf("height: %fmm;", b.HeightValue)
+		default:
+			return "", errors.New("invalid ast")
+		}
+	}
+	return param, nil
 }
 
 // Wrap the style information in " style=\"\"". Returns an empty string if no

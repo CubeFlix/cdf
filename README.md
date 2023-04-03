@@ -15,6 +15,4 @@ The AST is structured into a *document*, containing *blocks*. A *block*, like a 
 ## Todo
 
 * headers/footers
-* image
-* header
 * horizontal rule

@@ -70,7 +70,7 @@ func (p *Parser) parseTag() (tagItem, error) {
 		if p.cur+nameLen >= p.length {
 			return tagItem{}, io.EOF
 		}
-		if !unicode.IsLetter(rune(p.data[p.cur+nameLen])) {
+		if !unicode.IsLetter(rune(p.data[p.cur+nameLen])) && p.data[p.cur+nameLen] != '-' {
 			// End of name.
 			break
 		}
@@ -134,7 +134,7 @@ func (p *Parser) parseOpeningTagAttribute() (string, string, bool, error) {
 		if p.cur+nameLen >= p.length {
 			return "", "", false, io.EOF
 		}
-		if !unicode.IsLetter(rune(p.data[p.cur+nameLen])) {
+		if !unicode.IsLetter(rune(p.data[p.cur+nameLen])) && p.data[p.cur+nameLen] != '-' {
 			// End of name.
 			break
 		}
