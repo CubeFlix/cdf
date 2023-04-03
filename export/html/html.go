@@ -7,6 +7,7 @@ import (
 	"errors"
 	"html"
 	"io"
+	"strings"
 
 	"github.com/cubeflix/cdf/ast"
 )
@@ -106,7 +107,10 @@ func (h *HTMLExporter) exportBlock(b ast.Block) error {
 		block := b.(*ast.Paragraph)
 		h.stream.Write([]byte("<p>"))
 		for i := range block.Content {
-			h.exportInlineBlock(block.Content[i])
+			err := h.exportInlineBlock(block.Content[i])
+			if err != nil {
+				return err
+			}
 		}
 		h.stream.Write([]byte("</p>"))
 	default:
@@ -122,18 +126,57 @@ func (h *HTMLExporter) exportInlineBlock(b ast.InlineBlock) error {
 	switch b.(type) {
 	case string:
 		// Write the content.
-		h.stream.Write([]byte(html.EscapeString(b.(string))))
+		h.stream.Write([]byte(strings.ReplaceAll(html.EscapeString(b.(string)), "\n", "<br>")))
+		break
 	case ast.HyperlinkBlock:
 		// Write the hyperlink.
 		block := b.(ast.HyperlinkBlock)
 		h.stream.Write([]byte("<a href=\"" + block.Destination + "\">"))
 		for i := range block.Content {
-			h.exportInlineBlock(block.Content[i])
+			err := h.exportInlineBlock(block.Content[i])
+			if err != nil {
+				return err
+			}
 		}
 		h.stream.Write([]byte("</a>"))
+		break
+	case ast.FormattingBlock:
+		// Write the formatting.
+		block := b.(ast.FormattingBlock)
+		attrName, err := getHTMLFormattingTagName(block)
+		if err != nil {
+			return err
+		}
+		h.stream.Write([]byte("<" + attrName + ">"))
+		for i := range block.Content {
+			err = h.exportInlineBlock(block.Content[i])
+			if err != nil {
+				return err
+			}
+		}
+		h.stream.Write([]byte("</" + attrName + ">"))
+		break
 	default:
 		return errors.New("invalid ast")
 	}
 
 	return nil
+}
+
+// Get the tag name for a formatting block.
+func getHTMLFormattingTagName(b ast.FormattingBlock) (string, error) {
+	switch b.Attribute {
+	case ast.BoldFormatting:
+		return "b", nil
+	case ast.ItalicFormatting:
+		return "i", nil
+	case ast.StrikethroughFormatting:
+		return "s", nil
+	case ast.UnderlineFormatting:
+		return "u", nil
+	case ast.TeletypeFormatting:
+		return "code", nil
+	default:
+		return "", errors.New("invalid ast")
+	}
 }

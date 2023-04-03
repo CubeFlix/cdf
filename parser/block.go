@@ -6,6 +6,7 @@ package parser
 import (
 	"errors"
 	"io"
+	"strings"
 
 	"github.com/cubeflix/cdf/ast"
 )
@@ -111,11 +112,26 @@ func (p *Parser) parseParagraphBlockContent() ([]ast.InlineBlock, error) {
 					if dest, ok := tag.Attributes["dest"]; ok {
 						blocks = append(blocks, ast.HyperlinkBlock{
 							BaseInlineBlock: ast.BaseInlineBlock{Content: content},
-							Destination:     dest,
+							Destination:     strings.ReplaceAll(dest, "\n", ""),
 						})
 					} else {
 						return nil, errors.New("expected a 'dest' attribute")
 					}
+				} else if tag.Name == "b" {
+					// Bold text.
+					blocks = append(blocks, ast.FormattingBlock{BaseInlineBlock: ast.BaseInlineBlock{Content: content}, Attribute: ast.BoldFormatting})
+				} else if tag.Name == "i" {
+					// Italic text.
+					blocks = append(blocks, ast.FormattingBlock{BaseInlineBlock: ast.BaseInlineBlock{Content: content}, Attribute: ast.ItalicFormatting})
+				} else if tag.Name == "s" {
+					// Strikethrough text.
+					blocks = append(blocks, ast.FormattingBlock{BaseInlineBlock: ast.BaseInlineBlock{Content: content}, Attribute: ast.StrikethroughFormatting})
+				} else if tag.Name == "u" {
+					// Underline text.
+					blocks = append(blocks, ast.FormattingBlock{BaseInlineBlock: ast.BaseInlineBlock{Content: content}, Attribute: ast.UnderlineFormatting})
+				} else if tag.Name == "t" {
+					// Teletype text.
+					blocks = append(blocks, ast.FormattingBlock{BaseInlineBlock: ast.BaseInlineBlock{Content: content}, Attribute: ast.TeletypeFormatting})
 				} else {
 					return nil, errors.New("invalid tag type")
 				}

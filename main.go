@@ -11,9 +11,16 @@ import (
 )
 
 var code string = `
-[[cdf title=hello]]
+[[cdf title=hello|author=Kevin Chen]]
 [[p align=left]]ageni:
-[[link dest=https://google.com]]hello paragraph[[/]] gensp gn[[/]]
+[[link dest=https://google.com]]hello paragraph[[/]] g[[b]]BOLD tex
+t!![[/]]ens\\p gn\[[/]][[/]]
+
+[[p align=right]]
+hello! [[b]]BOLD[[/]] [[i]]italic[[/]]
+[[t]]teletype![[/]]
+[[/]]
+
 [[/]]
 `
 
