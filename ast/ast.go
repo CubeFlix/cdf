@@ -3,7 +3,7 @@
 
 package ast
 
-import "image/color"
+import "gopkg.in/go-playground/colors.v1"
 
 // CDF document.
 type Document struct {
@@ -90,7 +90,9 @@ const (
 type ColorBlock struct {
 	BaseInlineBlock
 
-	Value color.Color
+	// nil values indicate unspecified value.
+	ForegroundValue colors.Color
+	BackgroundValue colors.Color
 }
 
 // Size block.

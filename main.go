@@ -21,7 +21,7 @@ hello! [[b]]BOLD[[/]] [[i]]italic[[/]]
 [[t]]teletype![[/]][[size percent=10]]big TEXT![[/]]
 
 [[font family=Verdana]]font text special![[/]]
-
+[[color fg=#ff0000]]red text![[/]]
 [[/]]
 
 [[/]]

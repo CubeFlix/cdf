@@ -185,6 +185,18 @@ func (h *HTMLExporter) exportInlineBlock(b ast.InlineBlock) error {
 		}
 		h.stream.Write([]byte("</span>"))
 		break
+	case ast.ColorBlock:
+		// Write the color block.
+		block := b.(ast.ColorBlock)
+		h.stream.Write([]byte("<span style=\"" + getHTMLColorStyleParameter(&block) + "\">"))
+		for i := range block.Content {
+			err := h.exportInlineBlock(block.Content[i])
+			if err != nil {
+				return err
+			}
+		}
+		h.stream.Write([]byte("</span>"))
+		break
 	default:
 		return errors.New("invalid ast")
 	}
@@ -224,4 +236,16 @@ func getHTMLFontSizeParameter(b *ast.SizeBlock) (string, error) {
 		return fmt.Sprintf("%fmm", b.Value), nil
 	}
 	return "", errors.New("invalid ast")
+}
+
+// Get the style parameter for a color block.
+func getHTMLColorStyleParameter(b *ast.ColorBlock) string {
+	var param string
+	if b.ForegroundValue != nil {
+		param += "color: " + b.ForegroundValue.String() + ";"
+	}
+	if b.BackgroundValue != nil {
+		param += "background-color: " + b.BackgroundValue.String() + ";"
+	}
+	return param
 }

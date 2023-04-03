@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/cubeflix/cdf/ast"
+	"gopkg.in/go-playground/colors.v1"
 )
 
 // Parse the content in a block.
@@ -154,6 +155,15 @@ func (p *Parser) parseParagraphBlockContent() ([]ast.InlineBlock, error) {
 					} else {
 						return nil, errors.New("'font' tag expected a 'family' attribute")
 					}
+				} else if tag.Name == "color" {
+					// Color block.
+
+					// Get the color information.
+					fore, back, err := p.generateColorBlock(tag)
+					if err != nil {
+						return nil, err
+					}
+					blocks = append(blocks, ast.ColorBlock{BaseInlineBlock: ast.BaseInlineBlock{Content: content}, ForegroundValue: fore, BackgroundValue: back})
 				} else {
 					return nil, errors.New("invalid tag type")
 				}
@@ -212,4 +222,37 @@ func (p *Parser) generateSizeBlock(t tagItem) (float32, ast.SizeType, error) {
 		// Invalid tag parameters.
 		return 0, 0, errors.New("'size' tag should contain a valid size parameter ('percent', 'px', 'pt', 'cm', 'mm')")
 	}
+}
+
+// Get the color block information from a tag. Returns the foreground and
+// background color values. Values are nil if unspecified.
+func (p *Parser) generateColorBlock(t tagItem) (colors.Color, colors.Color, error) {
+	// Ensure that there is only either one or two parameters.
+	if len(t.Attributes) != 1 && len(t.Attributes) != 2 {
+		return nil, nil, errors.New("'color' tag should contain either one or two parameters ('fg', 'bg')")
+	}
+
+	var fore, back colors.Color
+	var err error
+
+	if val, ok := t.Attributes["fg"]; ok {
+		// Foreground color specified.
+		fore, err = colors.Parse(val)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+	if val, ok := t.Attributes["bg"]; ok {
+		// Background color specified.
+		back, err = colors.Parse(val)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+	if fore == nil && back == nil {
+		// Invalid tag parameters.
+		return nil, nil, errors.New("'color' tag should contain a valid color parameter ('fg', 'bg')")
+	}
+
+	return fore, back, nil
 }
