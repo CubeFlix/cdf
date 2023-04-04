@@ -5,6 +5,7 @@ package pages
 
 import (
 	"html/template"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -23,6 +24,8 @@ type Server struct {
 	PageTemplate        *template.Template
 	NotFoundTemplate    *template.Template
 	InvalidPageTemplate *template.Template
+
+	staticHandler http.Handler
 }
 
 // Page info.
@@ -98,6 +101,9 @@ func LoadServer(p string) (*Server, error) {
 			return nil, err
 		}
 	}
+
+	// Create the static file handler.
+	s.staticHandler = http.StripPrefix("/static/", http.FileServer(http.Dir(path.Join(p, "static"))))
 
 	return s, nil
 }

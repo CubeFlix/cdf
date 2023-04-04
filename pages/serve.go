@@ -16,12 +16,7 @@ import (
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if path.Dir(r.URL.Path) == "/static" {
 		// Serve static file.
-		data, err := os.ReadFile(path.Join(s.Path, "static", path.Base(r.URL.Path)))
-		if err != nil {
-			s.NotFound(w, r, r.URL.Path)
-			return
-		}
-		w.Write(data)
+		s.staticHandler.ServeHTTP(w, r)
 		return
 	}
 
