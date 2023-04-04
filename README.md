@@ -15,3 +15,8 @@ CDF pages is a server that allows for the hosting and creation of CDF documents.
 
 ## Todo
 
+* lists
+* tables
+* collapseables
+* inline images
+* file editing/live update

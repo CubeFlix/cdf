@@ -182,6 +182,33 @@ func (h *HTMLExporter) exportBlock(b ast.Block) error {
 		// Write the horizontal rule.
 		h.stream.Write([]byte("<hr>\n"))
 		break
+	case *ast.List:
+		// Write the list block.
+		block := b.(*ast.List)
+		if block.Ordered {
+			h.stream.Write([]byte("<ol" + wrapHTMLStyleParameter(alignmentStyle) + ">\n"))
+			for i := range block.Items {
+				h.stream.Write([]byte("<li>"))
+				err := h.exportBlock(block.Items[i])
+				if err != nil {
+					return err
+				}
+				h.stream.Write([]byte("</li>\n"))
+			}
+			h.stream.Write([]byte("</ol>\n"))
+		} else {
+			h.stream.Write([]byte("<ul" + wrapHTMLStyleParameter(alignmentStyle) + ">\n"))
+			for i := range block.Items {
+				h.stream.Write([]byte("<li>"))
+				err := h.exportBlock(block.Items[i])
+				if err != nil {
+					return err
+				}
+				h.stream.Write([]byte("</li>\n"))
+			}
+			h.stream.Write([]byte("</ul>\n"))
+		}
+		break
 	default:
 		return errors.New("invalid ast")
 	}

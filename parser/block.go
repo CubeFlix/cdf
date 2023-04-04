@@ -137,6 +137,19 @@ func (p *Parser) parseBlockContent() ([]ast.Block, error) {
 			blocks = append(blocks, &ast.HorizontalRule{
 				BaseBlock: ast.BaseBlock{Alignment: alignment, Wrap: shouldWrap},
 			})
+		} else if tag.Name == "list" {
+			// List block.
+			content, err := p.parseBlockContent()
+			if err != nil {
+				return nil, err
+			}
+			_, isOrdered := tag.Attributes["ordered"]
+
+			blocks = append(blocks, &ast.List{
+				BaseBlock: ast.BaseBlock{Alignment: alignment, Wrap: shouldWrap},
+				Items:     content,
+				Ordered:   isOrdered,
+			})
 		} else {
 			// Invalid block type.
 			return nil, errors.New("invalid block type")

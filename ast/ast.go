@@ -111,6 +111,14 @@ type HorizontalRule struct {
 	BaseBlock
 }
 
+// List block.
+type List struct {
+	BaseBlock
+
+	Items   []Block
+	Ordered bool
+}
+
 // Inline block for AST. An inline block may be a base inline block or string.
 type InlineBlock interface{}
 
