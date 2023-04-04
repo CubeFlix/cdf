@@ -119,6 +119,37 @@ type List struct {
 	Ordered bool
 }
 
+// Table block.
+type Table struct {
+	BaseBlock
+
+	Rows []TableRow
+}
+
+// Table row block.
+type TableRow struct {
+	Cells []TableCell
+}
+
+// Table row cell block.
+type TableCell struct {
+	Content  []Block
+	IsHeader bool
+}
+
+// Collapsed block.
+type Collapse struct {
+	BaseBlock
+
+	Summary []InlineBlock
+	Content []Block
+}
+
+// Page break block.
+type PageBreak struct {
+	BaseBlock
+}
+
 // Inline block for AST. An inline block may be a base inline block or string.
 type InlineBlock interface{}
 

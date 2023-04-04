@@ -34,6 +34,9 @@ type PageInfo struct {
 	Subtitle string
 	Date     string
 	Author   string
+
+	DidError bool
+	Error    string
 }
 
 // Page content template.
@@ -127,15 +130,27 @@ func (s *Server) CompilePage(page string) error {
 	// Parse the page.
 	if err := parser.Parse(); err != nil {
 		// Parsing failed.
-		err = s.InvalidPageTemplate.Execute(outFile, InvalidPageTemplate{Page: page, Error: err.Error()})
-		if err != nil {
-			return err
-		}
 		s.Pages[page] = PageInfo{
 			Title:    parser.Tree.Title,
 			Subtitle: parser.Tree.Subtitle,
 			Author:   parser.Tree.Author,
 			Date:     parser.Tree.Date,
+			DidError: true,
+			Error:    err.Error(),
+		}
+		return nil
+	}
+
+	// Export the page.
+	if err := exporter.Export(&parser.Tree); err != nil {
+		// Exporting failed.
+		s.Pages[page] = PageInfo{
+			Title:    parser.Tree.Title,
+			Subtitle: parser.Tree.Subtitle,
+			Author:   parser.Tree.Author,
+			Date:     parser.Tree.Date,
+			DidError: true,
+			Error:    err.Error(),
 		}
 		return nil
 	}
@@ -145,16 +160,6 @@ func (s *Server) CompilePage(page string) error {
 		Subtitle: parser.Tree.Subtitle,
 		Author:   parser.Tree.Author,
 		Date:     parser.Tree.Date,
-	}
-
-	// Export the page.
-	if err := exporter.Export(&parser.Tree); err != nil {
-		// Exporting failed.
-		err = s.InvalidPageTemplate.Execute(outFile, InvalidPageTemplate{Page: page, Error: err.Error()})
-		if err != nil {
-			return err
-		}
-		return nil
 	}
 
 	return nil

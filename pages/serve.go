@@ -29,7 +29,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Serve a page.
-	if _, err := os.Stat(path.Join(s.Path, "compiled", page+".html")); os.IsNotExist(err) {
+	_, ok := s.Pages[page]
+	if !ok {
 		// Compiled page does not exist.
 		s.NotFound(w, r, page)
 		return
@@ -53,6 +54,20 @@ func (s *Server) ServeCompiledPage(w http.ResponseWriter, r *http.Request, page 
 	pageInfo, ok := s.Pages[page]
 	if !ok {
 		s.Error(w, r, errors.New("compiled page info not found"))
+		return
+	}
+
+	// If the page failed to compile, mention it.
+	if pageInfo.DidError {
+		// Error!
+		err = s.InvalidPageTemplate.Execute(w, InvalidPageTemplate{
+			Page:  page,
+			Error: pageInfo.Error,
+		})
+		if err != nil {
+			s.Error(w, r, err)
+			return
+		}
 		return
 	}
 

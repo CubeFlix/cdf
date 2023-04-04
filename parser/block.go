@@ -150,11 +150,173 @@ func (p *Parser) parseBlockContent() ([]ast.Block, error) {
 				Items:     content,
 				Ordered:   isOrdered,
 			})
+		} else if tag.Name == "table" {
+			// Table block.
+			table, err := p.parseTableContent()
+			if err != nil {
+				return nil, err
+			}
+			blocks = append(blocks, &ast.Table{
+				BaseBlock: ast.BaseBlock{Alignment: alignment, Wrap: shouldWrap},
+				Rows:      table,
+			})
+		} else if tag.Name == "collapse" {
+			// Collapseable block.
+			summaryContent, innerContent, err := p.parseCollapse()
+			if err != nil {
+				return nil, err
+			}
+			blocks = append(blocks, &ast.Collapse{
+				BaseBlock: ast.BaseBlock{Alignment: alignment, Wrap: shouldWrap},
+				Summary:   summaryContent,
+				Content:   innerContent,
+			})
+		} else if tag.Name == "break" {
+			// Page break.
+			_, err := p.parseParagraphBlockContent()
+			if err != nil {
+				return nil, err
+			}
+			blocks = append(blocks, &ast.PageBreak{})
 		} else {
 			// Invalid block type.
 			return nil, errors.New("invalid block type")
 		}
 	}
+}
+
+// Parse a table's content.
+func (p *Parser) parseTableContent() ([]ast.TableRow, error) {
+	// Parse the content in a table.
+	rows := make([]ast.TableRow, 0)
+	// Parse the inner blocks.
+	for {
+		// Skip whitespace.
+		err := p.skipWhitespace()
+		if err != nil {
+			return nil, err
+		}
+
+		// Parse the block's tag.
+		tag, err := p.parseTag()
+		if err != nil {
+			return nil, err
+		}
+
+		// Check for a closing tag.
+		if tag.IsClosing {
+			return rows, nil
+		}
+
+		if tag.Name != "row" {
+			return nil, errors.New("table should only contain rows")
+		}
+
+		// Parse the inner cells.
+		row, err := p.parseTableRow()
+		if err != nil {
+			return nil, err
+		}
+		rows = append(rows, ast.TableRow{Cells: row})
+	}
+}
+
+// Parse a table row's cells.
+func (p *Parser) parseTableRow() ([]ast.TableCell, error) {
+	// Parse the content in a row.
+	cells := make([]ast.TableCell, 0)
+
+	// Parse the inner blocks.
+	for {
+		// Skip whitespace.
+		err := p.skipWhitespace()
+		if err != nil {
+			return nil, err
+		}
+
+		// Parse the block's tag.
+		tag, err := p.parseTag()
+		if err != nil {
+			return nil, err
+		}
+
+		// Check for a closing tag.
+		if tag.IsClosing {
+			return cells, nil
+		}
+
+		if tag.Name != "cell" {
+			return nil, errors.New("row should only contain cells")
+		}
+
+		_, isHeader := tag.Attributes["is-header"]
+
+		// Parse the inner content.
+		content, err := p.parseBlockContent()
+		if err != nil {
+			return nil, err
+		}
+		cells = append(cells, ast.TableCell{
+			Content:  content,
+			IsHeader: isHeader,
+		})
+	}
+}
+
+// Parse the collapseable block. Returns the summary and content.
+func (p *Parser) parseCollapse() ([]ast.InlineBlock, []ast.Block, error) {
+	// Skip whitespace.
+	err := p.skipWhitespace()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Parse the summary tag.
+	summaryTag, err := p.parseTag()
+	if err != nil {
+		return nil, nil, err
+	}
+	if summaryTag.Name != "summary" {
+		return nil, nil, errors.New("collapseable block should contain a summary block")
+	}
+	summaryContent, err := p.parseParagraphBlockContent()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = p.skipWhitespace()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Parse the content tag.
+	contentTag, err := p.parseTag()
+	if err != nil {
+		return nil, nil, err
+	}
+	if contentTag.Name != "content" {
+		return nil, nil, errors.New("collapseable block should contain a content block")
+	}
+	content, err := p.parseBlockContent()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = p.skipWhitespace()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Closing tag.
+	closingTag, err := p.parseTag()
+	if err != nil {
+		return nil, nil, err
+	}
+	if !closingTag.IsClosing {
+		return nil, nil, errors.New("expected closing tag")
+	}
+
+	return summaryContent, content, nil
 }
 
 // Get the heading class given a heading tag.

@@ -209,6 +209,65 @@ func (h *HTMLExporter) exportBlock(b ast.Block) error {
 			h.stream.Write([]byte("</ul>\n"))
 		}
 		break
+	case *ast.Table:
+		// Write the table.
+		block := b.(*ast.Table)
+		h.stream.Write([]byte("<table" + wrapHTMLStyleParameter(alignmentStyle) + ">\n"))
+		for i := range block.Rows {
+			// Write the row.
+			h.stream.Write([]byte("<tr>\n"))
+			for j := range block.Rows[i].Cells {
+				// Write the cell.
+				cell := block.Rows[i].Cells[j]
+				if cell.IsHeader {
+					h.stream.Write([]byte("<th>"))
+					for cellBlock := range cell.Content {
+						err := h.exportBlock(cell.Content[cellBlock])
+						if err != nil {
+							return err
+						}
+					}
+					h.stream.Write([]byte("</th>\n"))
+				} else {
+					h.stream.Write([]byte("<td>"))
+					for cellBlock := range cell.Content {
+						err := h.exportBlock(cell.Content[cellBlock])
+						if err != nil {
+							return err
+						}
+					}
+					h.stream.Write([]byte("</td>\n"))
+				}
+			}
+			h.stream.Write([]byte("</tr>\n"))
+		}
+		h.stream.Write([]byte("</table>\n"))
+		break
+	case *ast.Collapse:
+		// Write the collapseable block.
+		block := b.(*ast.Collapse)
+		h.stream.Write([]byte("<details" + wrapHTMLStyleParameter(alignmentStyle) + "><summary>"))
+
+		// Write the summary.
+		for i := range block.Summary {
+			err := h.exportInlineBlock(block.Summary[i])
+			if err != nil {
+				return err
+			}
+		}
+		h.stream.Write([]byte("</summary>\n"))
+		for i := range block.Content {
+			err := h.exportBlock(block.Content[i])
+			if err != nil {
+				return nil
+			}
+		}
+		h.stream.Write([]byte("</details>\n"))
+		break
+	case *ast.PageBreak:
+		// Page break.
+		h.stream.Write([]byte("<br>"))
+		break
 	default:
 		return errors.New("invalid ast")
 	}
