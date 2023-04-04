@@ -4,6 +4,7 @@
 package pages
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -53,8 +54,21 @@ func (s *Server) ServeCompiledPage(w http.ResponseWriter, r *http.Request, page 
 		return
 	}
 
+	// Get page info.
+	pageInfo, ok := s.Pages[page]
+	if !ok {
+		s.Error(w, r, errors.New("compiled page info not found"))
+		return
+	}
+
 	// Serve the contents.
-	err = s.PageTemplate.Execute(w, PageTemplate{page, template.HTML(data)})
+	err = s.PageTemplate.Execute(w, PageTemplate{
+		Page:     page,
+		Title:    pageInfo.Title,
+		Subtitle: pageInfo.Subtitle,
+		Author:   pageInfo.Author,
+		Date:     pageInfo.Date,
+		Content:  template.HTML(data)})
 	if err != nil {
 		s.Error(w, r, err)
 		return

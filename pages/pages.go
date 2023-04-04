@@ -18,15 +18,29 @@ import (
 type Server struct {
 	Path string
 
+	Pages map[string]PageInfo
+
 	PageTemplate        *template.Template
 	NotFoundTemplate    *template.Template
 	InvalidPageTemplate *template.Template
 }
 
+// Page info.
+type PageInfo struct {
+	Title    string
+	Subtitle string
+	Date     string
+	Author   string
+}
+
 // Page content template.
 type PageTemplate struct {
-	Page    string
-	Content template.HTML
+	Page     string
+	Title    string
+	Subtitle string
+	Date     string
+	Author   string
+	Content  template.HTML
 }
 
 // Not found template.
@@ -47,7 +61,7 @@ func fileNameWithoutExtension(fileName string) string {
 
 // Load a new server from a path.
 func LoadServer(p string) (*Server, error) {
-	s := &Server{Path: p}
+	s := &Server{Path: p, Pages: map[string]PageInfo{}}
 
 	// Load the templates.
 	pageTemplate, err := os.ReadFile(path.Join(p, "template.html"))
@@ -111,7 +125,20 @@ func (s *Server) CompilePage(page string) error {
 		if err != nil {
 			return err
 		}
+		s.Pages[page] = PageInfo{
+			Title:    parser.Tree.Title,
+			Subtitle: parser.Tree.Subtitle,
+			Author:   parser.Tree.Author,
+			Date:     parser.Tree.Date,
+		}
 		return nil
+	}
+
+	s.Pages[page] = PageInfo{
+		Title:    parser.Tree.Title,
+		Subtitle: parser.Tree.Subtitle,
+		Author:   parser.Tree.Author,
+		Date:     parser.Tree.Date,
 	}
 
 	// Export the page.
