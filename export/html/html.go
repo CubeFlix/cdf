@@ -344,6 +344,44 @@ func getHTMLImageWidthHeightStyleParameter(b *ast.Image) (string, error) {
 	return param, nil
 }
 
+// Get the style parameters for width and height from an inline image block.
+func getHTMLInlineImageWidthHeightStyleParameter(b *ast.InlineImageBlock) (string, error) {
+	var param string
+	if b.HasWidthParameter {
+		switch b.WidthType {
+		case ast.PercentageSizeType:
+			param += fmt.Sprintf("width: %f%%;", b.WidthValue)
+		case ast.PixelSizeType:
+			param += fmt.Sprintf("width: %fpx;", b.WidthValue)
+		case ast.PointSizeType:
+			param += fmt.Sprintf("width: %fpt;", b.WidthValue)
+		case ast.CentimeterSizeType:
+			param += fmt.Sprintf("width: %fcm;", b.WidthValue)
+		case ast.MillimeterSizeType:
+			param += fmt.Sprintf("width: %fmm;", b.WidthValue)
+		default:
+			return "", errors.New("invalid ast")
+		}
+	}
+	if b.HasHeightParameter {
+		switch b.HeightType {
+		case ast.PercentageSizeType:
+			param += fmt.Sprintf("height: %f%%;", b.HeightValue)
+		case ast.PixelSizeType:
+			param += fmt.Sprintf("height: %fpx;", b.HeightValue)
+		case ast.PointSizeType:
+			param += fmt.Sprintf("height: %fpt;", b.HeightValue)
+		case ast.CentimeterSizeType:
+			param += fmt.Sprintf("height: %fcm;", b.HeightValue)
+		case ast.MillimeterSizeType:
+			param += fmt.Sprintf("height: %fmm;", b.HeightValue)
+		default:
+			return "", errors.New("invalid ast")
+		}
+	}
+	return param, nil
+}
+
 // Wrap the style information in " style=\"\"". Returns an empty string if no
 // style information is provided.
 func wrapHTMLStyleParameter(style string) string {
@@ -427,6 +465,15 @@ func (h *HTMLExporter) exportInlineBlock(b ast.InlineBlock) error {
 			}
 		}
 		h.stream.Write([]byte("</span>"))
+		break
+	case ast.InlineImageBlock:
+		// Write the inline image block.
+		block := b.(ast.InlineImageBlock)
+		sizeStyle, err := getHTMLInlineImageWidthHeightStyleParameter(&block)
+		if err != nil {
+			return err
+		}
+		h.stream.Write([]byte("<img" + wrapHTMLStyleParameter(sizeStyle) + " src=\"" + block.Source + "\">"))
 		break
 	default:
 		return errors.New("invalid ast")

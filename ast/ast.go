@@ -218,3 +218,18 @@ type FontBlock struct {
 
 	Family string
 }
+
+// Inline image block.
+type InlineImageBlock struct {
+	BaseInlineBlock
+
+	Source string
+
+	// Image size information.
+	HasWidthParameter  bool
+	WidthValue         float32
+	WidthType          SizeType
+	HasHeightParameter bool
+	HeightValue        float32
+	HeightType         SizeType
+}

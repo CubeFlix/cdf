@@ -444,6 +444,29 @@ func (p *Parser) parseParagraphBlockContent() ([]ast.InlineBlock, error) {
 						return nil, err
 					}
 					blocks = append(blocks, ast.ColorBlock{BaseInlineBlock: ast.BaseInlineBlock{Content: content}, ForegroundValue: fore, BackgroundValue: back})
+				} else if tag.Name == "inline-image" {
+					// Inline image block.
+					// Get the source.
+					imgSrc, ok := tag.Attributes["src"]
+					if !ok {
+						return nil, errors.New("'inline-image' tag expects a 'src' attribute")
+					}
+
+					a, b, c, d, e, f, err := p.generateImageBlock(tag)
+					if err != nil {
+						return nil, err
+					}
+
+					blocks = append(blocks, ast.InlineImageBlock{
+						BaseInlineBlock:    ast.BaseInlineBlock{Content: nil},
+						Source:             strings.ReplaceAll(imgSrc, "\n", ""),
+						HasWidthParameter:  a,
+						WidthValue:         b,
+						WidthType:          c,
+						HasHeightParameter: d,
+						HeightValue:        e,
+						HeightType:         f,
+					})
 				} else {
 					return nil, errors.New("invalid tag type")
 				}
